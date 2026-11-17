@@ -15,12 +15,12 @@ export default function Investigate() {
   const [sp] = useSearchParams()
   const nav = useNavigate()
   const [f, setF] = useState({ ...EMPTY, parcel_id: sp.get('parcel_id') || '' })
-  const [query, setQuery] = useState(sp.get('parcel_id') ? { parcel_id: sp.get('parcel_id') } : null)
+  const [query, setQuery] = useState(sp.get('parcel_id') ? { parcel_id: sp.get('parcel_id') } : {})
   const [category, setCategory] = useState('')
   const [offset, setOffset] = useState(0)
   const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value, ...(k === 'district' ? { upazila: '', mouza: '' } : {}), ...(k === 'upazila' ? { mouza: '' } : {}) }))
   const loc = useApi(() => api.locations({ district: f.district, upazila: f.upazila }), [f.district, f.upazila])
-  const res = useApi(() => (query ? api.parcels({ ...query, integrity_status: category, limit: 12, offset }) : Promise.resolve(null)), [query, category, offset])
+  const res = useApi(() => api.parcels({ ...query, integrity_status: category, limit: 12, offset }), [query, category, offset])
   useEffect(() => { setOffset(0) }, [query, category])
 
   const submit = (e) => {
@@ -57,7 +57,7 @@ export default function Investigate() {
             {field('dag', labels.dag, labels.examples[1])}{field('parcel_id', labels.parcel, labels.examples[2])}
           </div>
           <div className="mt-5 flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <button type="button" className="btn-outline w-full sm:w-auto" onClick={() => { setF(EMPTY); setQuery(null); setOffset(0) }}><X className="h-4 w-4" />{labels.clear}</button>
+            <button type="button" className="btn-outline w-full sm:w-auto" onClick={() => { setF(EMPTY); setQuery({}); setCategory(''); setOffset(0) }}><X className="h-4 w-4" />{labels.clear}</button>
             <button className="btn-primary w-full py-2.5 sm:w-auto sm:px-6" type="submit"><Search className="h-4 w-4" />{labels.search}<ArrowRight className="h-4 w-4" /></button>
           </div>
         </div>
@@ -67,7 +67,6 @@ export default function Investigate() {
         {res.data && res.data.items.length > 0 && <h2 className="mb-3 text-lg font-bold text-slate-900">{labels.results}</h2>}
         {res.loading && <Spinner label="Searching…" />}
         {res.error && <ErrorBox error={res.error} onRetry={res.reload} />}
-        {!res.loading && !res.error && !query && <Empty title={labels.emptyTitle} hint={labels.emptyHint} />}
         {res.data && res.data.items.length === 0 && <Empty title={labels.noResults} hint={labels.noResultsHint} />}
         {res.data && res.data.items.length > 0 && (
           <div>
