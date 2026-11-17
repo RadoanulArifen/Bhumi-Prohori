@@ -30,11 +30,6 @@ export const PageHeader = ({ title, subtitle, right, crumbs }) => (
     {right}
   </div>
 )
-export const Disclaimer = () => (
-  <p className="mt-6 rounded-lg bg-slate-100 px-4 py-2 text-xs text-slate-500">
-    ভূমি প্রহরী is decision-support only. Results show potential inconsistencies for human review; they are not a legal finding or a fraud probability. Synthetic hackathon data.
-  </p>
-)
 export const Card = ({ title, children, className = '', right }) => (
   <div className={`card min-w-0 p-4 sm:p-5 ${className}`}>
     {(title || right) && <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h2 className="min-w-0 break-words text-sm font-bold uppercase tracking-wide text-slate-600">{title}</h2>{right}</div>}

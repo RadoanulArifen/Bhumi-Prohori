@@ -1,6 +1,7 @@
 # LandGuard — 3-minute demo script (Round 1 video / Final 5-minute pitch)
 
 Start: backend and frontend running, browser at http://localhost:5173. Use **View Demo** on the home page so the 10-step bar guides you.
+The judge demo uses **P-000209** and its highest-priority transaction.
 Both students should speak. Keep the wording neutral: "potential inconsistency", "human review required" — never "fraud confirmed".
 
 | Time | Screen | Say |

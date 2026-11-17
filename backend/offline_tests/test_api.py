@@ -102,3 +102,24 @@ def test_computed_rule_results_drive_alert_listing(client, mismatch):
         assert alert["recommended_action"] == "Human Review Required"
     else:
         assert result["items"] == []
+
+
+def test_judge_demo_uses_selected_parcel_and_its_top_transaction(client):
+    from app.database.db import engine
+    from app.models.tables import Parcel, Transaction, Analysis
+
+    with engine.begin() as con:
+        con.execute(Parcel.__table__.insert(), {"parcel_id": "P-000209", "current_owner_id": "O-000001"})
+        for tid, pid, score in [("T-000001", "P-000001", 100),
+                                ("T-000002", "P-000209", 30), ("T-000003", "P-000209", 80)]:
+            con.execute(Transaction.__table__.insert(), {"transaction_id": tid, "parcel_id": pid})
+            con.execute(Analysis.__table__.insert(), {"transaction_id": tid, "parcel_id": pid,
+                                                     "priority_score": score, "double_sale": 1})
+    response = client.get("/api/demo")
+    assert response.status_code == 200
+    assert response.json()["parcel_id"] == "P-000209"
+    assert response.json()["transaction_id"] == "T-000003"
+
+
+def test_judge_demo_returns_404_when_selected_parcel_has_no_analysis(client):
+    assert client.get("/api/demo").status_code == 404

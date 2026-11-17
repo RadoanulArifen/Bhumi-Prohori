@@ -458,15 +458,14 @@ def report(transaction_id: str = TID, lang: str = Query(default="bn", pattern="^
 
 @router.get("/demo")
 def demo():
-    """Pick a showcase parcel (several distinct signals, 3+ transactions, includes over-transfer or double-sale)."""
+    """Use the selected judge-demo parcel and its highest-priority transaction."""
     r = one("""SELECT parcel_id, COUNT(*) txns, MAX(priority_score) ms,
                (MAX(double_sale)+MAX(over_transfer)+MAX(ownership_chain_break)+MAX(registration_mismatch)+MAX(mutation_mismatch)
                 +MAX(temporal_inconsistency)+(MAX(rapid_transfer)>0)) distinct_signals
-               FROM analysis_results GROUP BY parcel_id HAVING txns>=3 AND (MAX(over_transfer)=1 OR MAX(double_sale)=1)
-               ORDER BY distinct_signals DESC, ms DESC, txns DESC LIMIT 1""")
+               FROM analysis_results WHERE parcel_id=:p GROUP BY parcel_id""", p="P-000209")
     if r is None:
         raise HTTPException(404, "No demo parcel is available.")
-    top = one("SELECT transaction_id FROM analysis_results WHERE parcel_id=:p ORDER BY priority_score DESC LIMIT 1", p=r.parcel_id)
+    top = one("SELECT transaction_id FROM analysis_results WHERE parcel_id=:p ORDER BY priority_score DESC, transaction_id LIMIT 1", p=r.parcel_id)
     return {"parcel_id": r.parcel_id, "transaction_id": top.transaction_id, "distinct_signals": int(r.distinct_signals)}
 
 

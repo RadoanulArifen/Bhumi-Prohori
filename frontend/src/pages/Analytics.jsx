@@ -16,12 +16,6 @@ const bnValues = {
   Chattogram: 'চট্টগ্রাম', Chittagong: 'চট্টগ্রাম', Dhaka: 'ঢাকা', Narayanganj: 'নারায়ণগঞ্জ', Gazipur: 'গাজীপুর',
   Rajshahi: 'রাজশাহী', Khulna: 'খুলনা', Sylhet: 'সিলেট', Cumilla: 'কুমিল্লা', Bogura: 'বগুড়া', Mymensingh: 'ময়মনসিংহ', Tangail: 'টাঙ্গাইল', Barishal: 'বরিশাল',
 }
-const bnNotes = {
-  'fraud_labels.csv is synthetic ground truth derived from deterministic rules over the same records.': 'fraud_labels.csv একই নথিতে নির্দিষ্ট নিয়ম প্রয়োগ করে তৈরি কৃত্রিম সত্য-মান।',
-  "'pattern' = raw history/timing features only; 'records' adds record-comparison features; 'full' adds the rule signals and is shown only to demonstrate label leakage.": "'pattern'-এ শুধু ইতিহাস ও সময়ের বৈশিষ্ট্য আছে; 'records'-এ নথি তুলনার বৈশিষ্ট্য যোগ হয়; 'full'-এ নিয়মের সংকেতও থাকে, যা শুধু লেবেল লিকেজ দেখানোর জন্য।",
-  'Stored ML scores are 5-fold out-of-fold predictions, so no transaction is scored by a model that saw its label.': 'সংরক্ষিত ML স্কোর ৫-ভাঁজ out-of-fold পূর্বাভাস; কোনো লেনদেনের লেবেল দেখা মডেল সেটির স্কোর দেয়নি।',
-  'The Investigation Priority Score is NOT a fraud probability.': 'তদন্তের অগ্রাধিকার স্কোর জালিয়াতির সম্ভাবনা নয়।',
-}
 
 export default function Analytics() {
   const { language } = useLanguage()
@@ -71,7 +65,6 @@ export default function Analytics() {
               <tr key={k} className={`border-t border-slate-100 ${k === m.deployed_model ? 'bg-brand-50 font-semibold' : ''}`}>
                 <td className="py-2">{k}{k === m.deployed_model && ` (${t('deployed', 'চালু')})`}</td><td>{pct(v.test.precision)}</td><td>{pct(v.test.recall)}</td><td>{pct(v.test.f1)}</td><td>{v.test.roc_auc?.toFixed(3)}</td><td>{pct(m.cv[k].f1)}</td>
                 <td className="font-mono text-xs">{v.test.confusion_matrix.tn} / {v.test.confusion_matrix.fp} / {v.test.confusion_matrix.fn} / {v.test.confusion_matrix.tp}</td></tr>))}</tbody></table></div>
-          <ul className="mt-4 list-inside list-disc space-y-1 text-xs text-slate-500">{m.notes.map((n) => <li key={n}>{bn ? (bnNotes[n] || n) : n}</li>)}</ul>
         </Card>) : null}
     </div>
   )

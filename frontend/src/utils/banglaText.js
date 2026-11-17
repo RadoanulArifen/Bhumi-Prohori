@@ -26,11 +26,18 @@ const TERMS = {
   issues: 'অসংগতির ধরন', 'area mismatch': 'জমির পরিমাণে অমিল', 'missing mutation': 'নামজারির নথি অনুপস্থিত',
   'missing registration': 'রেজিস্ট্রেশনের নথি অনুপস্থিত', 'ownership mismatch': 'মালিকানার অমিল',
   'no signal': 'কোনো সংকেত নেই',
+  'buyer mismatch': 'ক্রেতার তথ্যে অমিল', 'seller mismatch': 'বিক্রেতার তথ্যে অমিল',
+  'new owner mismatch': 'নতুন মালিকের তথ্যে অমিল', 'previous owner mismatch': 'আগের মালিকের তথ্যে অমিল',
+  'share mismatch': 'মালিকানার অংশে অমিল', 'type mismatch': 'হস্তান্তরের ধরনে অমিল',
+  'transaction date': 'লেনদেনের তারিখ', 'registration date': 'রেজিস্ট্রেশনের তারিখ', 'mutation date': 'নামজারির তারিখ',
+  'invalid registration date': 'রেজিস্ট্রেশনের তারিখে অসংগতি', 'invalid mutation date': 'নামজারির তারিখে অসংগতি',
 }
 
 export function bnTerm(value) {
   if (value === null || value === undefined) return value
-  return TERMS[String(value).toLowerCase()] || banglaDisplay(value)
+  const source = String(value)
+  if (source.includes(', ')) return source.split(', ').map(bnTerm).join(', ')
+  return TERMS[source.toLowerCase()] || banglaDisplay(value)
 }
 
 export function displayDate(value, language = 'en') {
@@ -48,27 +55,64 @@ export function evidenceTitle(type, fallback) {
   })[type] || banglaDisplay(fallback)
 }
 
+// Translate the complete record-comparison clauses before transliterating names.
+// Stored evidence may capitalize only the first clause and lowercase identifiers.
+function recordIssueMessage(message) {
+  const rules = [
+    [/^no registration record is linked to this transaction$/i, () => 'এই লেনদেনের সঙ্গে কোনো রেজিস্ট্রেশন নথি সংযুক্ত নেই'],
+    [/^no mutation record is linked to this transaction$/i, () => 'এই লেনদেনের সঙ্গে কোনো নামজারির নথি সংযুক্ত নেই'],
+    [/^registered buyer (.+?) differs from transaction buyer (.+)$/i, (a, b) => `রেজিস্ট্রেশনের নথিতে উল্লেখিত ক্রেতা ${a} লেনদেনের ক্রেতা ${b}-এর সঙ্গে মেলে না`],
+    [/^registered seller (.+?) differs from transaction seller (.+)$/i, (a, b) => `রেজিস্ট্রেশনের নথিতে উল্লেখিত বিক্রেতা ${a} লেনদেনের বিক্রেতা ${b}-এর সঙ্গে মেলে না`],
+    [/^registered area (.+?) differs from transaction area (.+?) decimal$/i, (a, b) => `রেজিস্ট্রেশনের নথিতে জমির পরিমাণ ${a} শতক, কিন্তু লেনদেনের নথিতে ${b} শতক`],
+    [/^registration type '(.+?)' differs from transaction type '(.+?)'$/i, (a, b) => `রেজিস্ট্রেশনে হস্তান্তরের ধরন ${a}, কিন্তু লেনদেনের নথিতে ${b}`],
+    [/^registration date (.+?) is before the transaction date (.+)$/i, (a, b) => `রেজিস্ট্রেশনের তারিখ (${a}) লেনদেনের তারিখের (${b}) আগে`],
+    [/^(?:the )?mutation owner (.+?) differs from registered buyer (.+)$/i, (a, b) => `নামজারির নথিতে উল্লেখিত মালিক ${a} রেজিস্ট্রেশনের ক্রেতা ${b}-এর সঙ্গে মেলে না`],
+    [/^(?:the )?mutation previous owner (.+?) differs from registered seller (.+)$/i, (a, b) => `নামজারিতে উল্লেখিত আগের মালিক ${a} রেজিস্ট্রেশনের বিক্রেতা ${b}-এর সঙ্গে মেলে না`],
+    [/^mutated area (.+?) differs from registered area (.+?) decimal$/i, (a, b) => `নামজারির নথিতে জমির পরিমাণ ${a} শতক, কিন্তু রেজিস্ট্রেশনের নথিতে ${b} শতক`],
+    [/^mutation share (.+?)% differs from transferred share (.+?)%$/i, (a, b) => `নামজারির নথিতে মালিকানার অংশ ${a}%, কিন্তু হস্তান্তরিত অংশ ${b}%`],
+    [/^mutation type '(.+?)' differs from registration type '(.+?)'$/i, (a, b) => `নামজারিতে হস্তান্তরের ধরন ${a}, কিন্তু রেজিস্ট্রেশনে ${b}`],
+    [/^mutation date (.+?) is earlier than the registration\/transaction date$/i, (a) => `নামজারির তারিখ (${a}) রেজিস্ট্রেশন বা লেনদেনের তারিখের আগে`],
+  ]
+  const parts = message.replace(/\.$/, '').split(/;\s*/)
+  const translated = parts.map(part => {
+    for (const [pattern, render] of rules) {
+      const match = part.match(pattern)
+      if (match) return render(...match.slice(1).map(value => {
+        if (/^\d{1,2} [a-z]{3} \d{4}$/i.test(value)) return displayDate(value, 'bn')
+        return bnTerm(value)
+      }))
+    }
+    return null
+  })
+  return translated.every(Boolean) ? `${translated.join('। ')}।` : null
+}
+
 export function evidenceMessage(item) {
   const s = item.message || ''
+  const recordMessage = recordIssueMessage(s)
+  if (recordMessage) return recordMessage
+  if (s === 'Expected order is transaction date ≤ registration date ≤ mutation date, but the recorded dates are out of order.') {
+    return 'লেনদেনের তারিখের পরে বা একই দিনে রেজিস্ট্রেশন এবং রেজিস্ট্রেশনের পরে বা একই দিনে নামজারি হওয়ার কথা। নথিভুক্ত তারিখগুলো এই ক্রম অনুসরণ করছে না।'
+  }
   if (s.toLowerCase() === 'the registration record does not agree with the transaction record.') return 'রেজিস্ট্রেশনের নথি লেনদেনের নথির সঙ্গে মেলে না।'
   if (s.toLowerCase() === 'the mutation record does not agree with the registration record.') return 'নামজারির নথি রেজিস্ট্রেশনের নথির সঙ্গে মেলে না।'
   if (s.toLowerCase() === 'no registration record is linked to this transaction.') return 'এই লেনদেনের সঙ্গে কোনো রেজিস্ট্রেশন নথি সংযুক্ত নেই।'
   if (s.toLowerCase() === 'no mutation record is linked to this transaction.') return 'এই লেনদেনের সঙ্গে কোনো নামজারির নথি সংযুক্ত নেই।'
-  const ownerDiff = s.match(/^The mutation previous owner (.+?) differs from registered seller (.+?)\.$/)
+  const ownerDiff = s.match(/^The mutation previous owner (.+?) differs from registered seller (.+?)\.$/i)
   if (ownerDiff) return `নামজারিতে উল্লেখিত আগের মালিক ${banglaDisplay(ownerDiff[1])} রেজিস্ট্রিতে উল্লেখিত বিক্রেতা ${banglaDisplay(ownerDiff[2])}-এর সঙ্গে মেলে না।`
-  const buyerDiff = s.match(/^registered buyer (.+?) differs from transaction buyer (.+?)\.$/)
+  const buyerDiff = s.match(/^registered buyer (.+?) differs from transaction buyer (.+?)\.$/i)
   if (buyerDiff) return `রেজিস্ট্রিতে উল্লেখিত ক্রেতা ${banglaDisplay(buyerDiff[1])} লেনদেনের ক্রেতা ${banglaDisplay(buyerDiff[2])}-এর সঙ্গে মেলে না।`
-  const sellerDiff = s.match(/^registered seller (.+?) differs from transaction seller (.+?)\.$/)
+  const sellerDiff = s.match(/^registered seller (.+?) differs from transaction seller (.+?)\.$/i)
   if (sellerDiff) return `রেজিস্ট্রিতে উল্লেখিত বিক্রেতা ${banglaDisplay(sellerDiff[1])} লেনদেনের বিক্রেতা ${banglaDisplay(sellerDiff[2])}-এর সঙ্গে মেলে না।`
-  const double = s.match(/^(.+?) appears as seller again although transaction (.+?) had already transferred their entire recorded interest in this parcel\.$/)
+  const double = s.match(/^(.+?) appears as seller again although transaction (.+?) had already transferred their entire recorded interest in this parcel\.$/i)
   if (double) return `${banglaDisplay(double[1])} আবার বিক্রেতা হিসেবে দেখা যাচ্ছে, যদিও ${double[2]} লেনদেনে এই জমিতে তাঁর নথিভুক্ত সম্পূর্ণ মালিকানা আগেই হস্তান্তর করা হয়েছিল।`
-  const share = s.match(/^Transferred share \((.+?)%\) exceeds the seller's recorded share before the transfer \((.+?)%\)\.$/)
+  const share = s.match(/^Transferred share \((.+?)%\) exceeds the seller's recorded share before the transfer \((.+?)%\)\.$/i)
   if (share) return `হস্তান্তরিত অংশ (${banglaDisplay(share[1])}%) হস্তান্তরের আগে বিক্রেতার নথিভুক্ত অংশ (${banglaDisplay(share[2])}%)-এর চেয়ে বেশি।`
-  const overArea = s.match(/^Transferred area \((.+?) decimal\) exceeds the area the seller controlled \((.+?) decimal\)\.$/)
+  const overArea = s.match(/^Transferred area \((.+?) decimal\) exceeds the area the seller controlled \((.+?) decimal\)\.$/i)
   if (overArea) return `হস্তান্তরিত জমির পরিমাণ (${banglaDisplay(overArea[1])} শতক) বিক্রেতার নিয়ন্ত্রণাধীন জমির পরিমাণ (${banglaDisplay(overArea[2])} শতক) ছাড়িয়ে গেছে।`
-  const rapid = s.match(/^This parcel was transferred again (\d+) day\(s\) after the previous transfer \((strong|moderate) signal\)\. Rapid transfers are an anomaly signal only, not proof of wrongdoing\.$/)
+  const rapid = s.match(/^This parcel was transferred again (\d+) day\(s\) after the previous transfer \((strong|moderate) signal\)\. Rapid transfers are an anomaly signal only, not proof of wrongdoing\.$/i)
   if (rapid) return `আগের হস্তান্তরের ${banglaDisplay(rapid[1])} দিন পর জমিটি আবার হস্তান্তর করা হয়েছে (${rapid[2] === 'strong' ? 'জোরালো' : 'মাঝারি'} সংকেত)। দ্রুত হস্তান্তর কেবল একটি অসংগতির সংকেত, অনিয়মের প্রমাণ নয়।`
-  const chain = s.match(/^The recorded seller (.+?) does not match the recorded previous owner (.+?)\.$/)
+  const chain = s.match(/^The recorded seller (.+?) does not match the recorded previous owner (.+?)\.$/i)
   if (chain) return `নথিভুক্ত বিক্রেতা ${banglaDisplay(chain[1])} নথিভুক্ত আগের মালিক ${banglaDisplay(chain[2])}-এর সঙ্গে মেলে না।`
   return banglaDisplay(s)
 }

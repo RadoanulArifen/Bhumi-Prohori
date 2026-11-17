@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { NavLink, Outlet, Link, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, Link } from 'react-router-dom'
 import { BarChart3, FileText, Home, LayoutDashboard, Menu, Search, Siren, X, UserRound, ScanText } from 'lucide-react'
 import DemoBar from '../components/DemoBar'
-import { Disclaimer } from '../components/ui'
 import brandMark from '../image/ভূমি প্রহরী_ নিরাপদ জমির প্রতীক.png'
 import { useAuth } from '../hooks/useAuth'
 import { useLanguage } from '../i18n'
@@ -23,11 +22,9 @@ export const Logo = ({ light = true }) => (
 
 export default function AppLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const location = useLocation()
   const { user } = useAuth()
   const { language } = useLanguage()
   const bn = language === 'bn'
-  const isParcelOverview = /^\/parcel\/[^/]+\/overview\/?$/.test(location.pathname)
   return (
     <div className="flex min-h-screen">
       <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col bg-brand-950 p-4 text-white lg:flex">
@@ -57,7 +54,7 @@ export default function AppLayout() {
             <NavLink to="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-semibold text-brand-100/80 hover:bg-white/10"><UserRound className="h-5 w-5"/>{user?.name || 'Profile'}</NavLink>
           </nav>}
         </header>
-        <main className="mx-auto w-full max-w-6xl min-w-0 px-4 pb-24 pt-4 sm:p-5 md:p-8"><Outlet />{!isParcelOverview && <Disclaimer />}</main>
+        <main className="mx-auto w-full max-w-6xl min-w-0 px-4 pb-24 pt-4 sm:p-5 md:p-8"><Outlet /></main>
       </div>
     </div>
   )

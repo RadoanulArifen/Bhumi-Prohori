@@ -8,7 +8,8 @@ export function DemoProvider({ children }) {
   const [demo, setDemo] = useState(() => {
     try {
       const saved = localStorage.getItem('lg_demo') ?? sessionStorage.getItem('lg_demo')
-      return saved ? JSON.parse(saved) : null
+      const demo = saved ? JSON.parse(saved) : null
+      return demo?.parcelId === 'P-014133' ? null : demo
     } catch { return null }
   })
   useEffect(() => {
