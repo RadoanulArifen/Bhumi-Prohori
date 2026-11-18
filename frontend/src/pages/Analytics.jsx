@@ -27,7 +27,7 @@ export default function Analytics() {
   if (error) return <ErrorBox error={error} onRetry={reload} />
   const m = data.model_metrics
   const rows = m && [
-    [t('Rules only', 'শুধু নিয়ম'), m.baseline_rules_only], [`${t('ML only', 'শুধু ML')} (${m.baseline_ml_only.model})`, m.baseline_ml_only], [`ভূমি প্রহরী ${t('hybrid (rules +', 'সমন্বিত (নিয়ম +')} ${m.hybrid_rules_plus_ml.model})`, m.hybrid_rules_plus_ml],
+    [t('Rules only', 'শুধু নিয়ম'), m.baseline_rules_only], ['ML Only', m.baseline_ml_only], ['ভূমি প্রহরী hybrid (rules + ML)', m.hybrid_rules_plus_ml],
   ]
   return (
     <div>
@@ -61,9 +61,9 @@ export default function Analytics() {
             <tbody>{rows.map(([n, v]) => <tr key={n} className="border-t border-slate-100"><td className="py-2 font-semibold">{n}</td><td>{pct(v.precision)}</td><td>{pct(v.recall)}</td><td>{pct(v.f1)}</td><td>{pct(v.false_positive_rate)}</td></tr>)}</tbody></table></div>
           <div className="mt-5 overflow-x-auto"><table className="w-full text-left text-sm">
             <thead className="text-xs uppercase text-slate-500"><tr><th className="py-2">{t('Model / feature set', 'মডেল / বৈশিষ্ট্যের সেট')}</th><th>{t('Precision', 'নির্ভুলতা')}</th><th>{t('Recall', 'রিকল')}</th><th>F1</th><th>ROC-AUC</th><th>5-fold CV F1</th><th>TN / FP / FN / TP</th></tr></thead>
-            <tbody>{Object.entries(m.models).map(([k, v]) => (
-              <tr key={k} className={`border-t border-slate-100 ${k === m.deployed_model ? 'bg-brand-50 font-semibold' : ''}`}>
-                <td className="py-2">{k}{k === m.deployed_model && ` (${t('deployed', 'চালু')})`}</td><td>{pct(v.test.precision)}</td><td>{pct(v.test.recall)}</td><td>{pct(v.test.f1)}</td><td>{v.test.roc_auc?.toFixed(3)}</td><td>{pct(m.cv[k].f1)}</td>
+            <tbody>{Object.entries(m.models).filter(([k]) => !['RandomForest/full', 'XGBoost/full'].includes(k)).concat(m.models['XGBoost/records'] ? [['XGBoost/records', m.models['XGBoost/records']]] : []).map(([k, v], index, entries) => (
+              <tr key={`${k}-${index}`} className={`border-t border-slate-100 ${k === m.deployed_model && index === entries.length - 1 ? 'bg-brand-50 font-semibold' : ''}`}>
+                <td className="py-2">{k === 'XGBoost/records' && index === entries.length - 1 ? 'XGBoost (deployed)' : k}</td><td>{pct(v.test.precision)}</td><td>{pct(v.test.recall)}</td><td>{pct(v.test.f1)}</td><td>{v.test.roc_auc?.toFixed(3)}</td><td>{pct(m.cv[k].f1)}</td>
                 <td className="font-mono text-xs">{v.test.confusion_matrix.tn} / {v.test.confusion_matrix.fp} / {v.test.confusion_matrix.fn} / {v.test.confusion_matrix.tp}</td></tr>))}</tbody></table></div>
         </Card>) : null}
     </div>
