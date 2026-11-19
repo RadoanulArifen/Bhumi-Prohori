@@ -1,27 +1,29 @@
+import { lazy } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import Login from './pages/Login'
-import Profile from './pages/Profile'
 import AppLayout from './layouts/AppLayout'
 import ParcelLayout from './layouts/ParcelLayout'
 import AlertDetailLayout from './layouts/AlertDetailLayout'
 import Home from './pages/Home'
-import DemoStart from './pages/DemoStart'
-import Dashboard from './pages/Dashboard'
-import Investigate from './pages/Investigate'
-import ParcelOverview from './pages/ParcelOverview'
-import OwnershipHistory from './pages/OwnershipHistory'
-import TransactionGraph from './pages/TransactionGraph'
-import TransactionTimeline from './pages/TransactionTimeline'
-import ParcelAlerts from './pages/ParcelAlerts'
-import Alerts from './pages/Alerts'
-import AlertEvidence from './pages/AlertEvidence'
-import RegistrationMutation from './pages/RegistrationMutation'
-import AiAnalysis from './pages/AiAnalysis'
-import Analytics from './pages/Analytics'
-import Reports from './pages/Reports'
-import NotFound from './pages/NotFound'
-import DocumentVerification from './pages/DocumentVerification'
+
+const Profile = lazy(() => import('./pages/Profile'))
+const DemoStart = lazy(() => import('./pages/DemoStart'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Investigate = lazy(() => import('./pages/Investigate'))
+const ParcelOverview = lazy(() => import('./pages/ParcelOverview'))
+const OwnershipHistory = lazy(() => import('./pages/OwnershipHistory'))
+const TransactionGraph = lazy(() => import('./pages/TransactionGraph'))
+const TransactionTimeline = lazy(() => import('./pages/TransactionTimeline'))
+const ParcelAlerts = lazy(() => import('./pages/ParcelAlerts'))
+const Alerts = lazy(() => import('./pages/Alerts'))
+const AlertEvidence = lazy(() => import('./pages/AlertEvidence'))
+const RegistrationMutation = lazy(() => import('./pages/RegistrationMutation'))
+const AiAnalysis = lazy(() => import('./pages/AiAnalysis'))
+const Analytics = lazy(() => import('./pages/Analytics'))
+const Reports = lazy(() => import('./pages/Reports'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+const DocumentVerification = lazy(() => import('./pages/DocumentVerification'))
 
 function ProtectedApp() {
   const { user, ready } = useAuth()

@@ -1,2 +1,3 @@
 #!/usr/bin/env bash
-cd "$(dirname "$0")/frontend" && npm run dev
+# Local development uses the Vite proxy to the local FastAPI server.
+cd "$(dirname "$0")/frontend" && VITE_API_BASE='' npm run dev

@@ -68,7 +68,7 @@ export default function ParcelOverview() {
           {docItems.map((item) => {
             return <article key={item.key} className="card flex min-w-0 gap-3 p-3 sm:flex-col sm:p-4">
               <button type="button" onClick={() => setDocumentPreview(item)} className="group relative h-28 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 sm:h-36 sm:w-full" aria-label={`${bn ? 'দেখুন' : 'View'} ${item.title}`}>
-                <img src={item.image} alt="" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105" />
+                <img src={item.image} loading="lazy" decoding="async" alt="" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105" />
               </button>
               <div className="flex min-w-0 flex-1 flex-col">
                 <h3 className="break-words font-bold text-slate-900">{item.title}</h3>

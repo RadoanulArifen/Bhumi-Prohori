@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Brain, Database, FileSearch, GitBranch, Menu, Network, Play, ScanSearch, ShieldCheck, Siren, UserCheck, X } from 'lucide-react'
-import bannerImage from '../image/banner.jpg'
+import bannerSmall from '../image/banner-1120.webp'
+import bannerLarge from '../image/banner-1920.webp'
 import { Logo } from '../layouts/AppLayout'
 import { useAuth } from '../hooks/useAuth'
 
@@ -24,8 +25,11 @@ export default function Home() {
   const navItems = user ? [...NAV, ['/profile', 'Profile']] : []
   return (
     <div className="min-h-screen bg-white">
-      <section className="relative isolate min-h-[580px] overflow-hidden text-white sm:min-h-[620px]">
-        <div className="absolute inset-0 -z-10"><img src={bannerImage} alt="Aerial view of vibrant agricultural fields" className="h-full w-full object-cover" /></div>
+      <section className="relative isolate min-h-[580px] overflow-hidden bg-brand-950 text-white sm:min-h-[620px]">
+        <picture className="absolute inset-0 -z-10">
+          <source media="(max-width: 767px)" srcSet={bannerSmall} />
+          <img src={bannerLarge} fetchpriority="high" alt="Aerial view of vibrant agricultural fields" className="h-full w-full object-cover" />
+        </picture>
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-brand-950/95 via-brand-950/70 to-brand-950/10" />
         <nav className="relative z-20 mx-auto flex max-w-6xl flex-wrap items-center justify-between px-4 py-4 sm:px-6 sm:py-5">
           <Logo />
