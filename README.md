@@ -5,8 +5,6 @@
 **বাংলাদেশের জমির নথি যাচাই ও লেনদেনের অসংগতি শনাক্ত করার সিদ্ধান্ত-সহায়ক ব্যবস্থা**  
 **A decision-support system for checking land records and identifying transaction inconsistencies in Bangladesh**
 
-**LandTech 2026 Hackathon · Digital Land Records, Verification & Digitization · Problem P3**
-
 ভূমি প্রহরী জমি, মালিক, লেনদেন, রেজিস্ট্রেশন ও নামজারির নথি একসঙ্গে বিশ্লেষণ করে। নিয়মভিত্তিক যাচাই, মেশিন লার্নিং এবং ব্যাখ্যাযোগ্য প্রমাণের সাহায্যে কোন লেনদেন আগে মানুষের পর্যালোচনা করা দরকার, তা অগ্রাধিকার অনুযায়ী দেখায়। ওয়েবসাইট ও ডাউনলোডযোগ্য PDF প্রতিবেদন বাংলা ও ইংরেজি—দুই ভাষায় ব্যবহার করা যায়।
 
 LandGuard analyzes parcel, owner, transaction, registration, and mutation records together. Deterministic checks, machine learning, and explainable evidence help prioritize transactions for human review. The website and downloadable PDF reports are available in Bengali and English.
