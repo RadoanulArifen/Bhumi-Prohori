@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 
+export function useDebouncedSearch(value) {
+  const [search, setSearch] = useState(value)
+  useEffect(() => {
+    if (value === search) return
+    const timer = setTimeout(() => setSearch(value), 250)
+    return () => clearTimeout(timer)
+  }, [value, search])
+  return search
+}
+
 // Runs an async function and tracks loading / error / data. Re-runs when `deps` change.
 export function useApi(fn, deps = []) {
   const [state, setState] = useState({ data: null, loading: true, error: null })

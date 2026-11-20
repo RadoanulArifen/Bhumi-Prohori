@@ -3,6 +3,7 @@ import { Eye, EyeOff, ShieldCheck, KeyRound } from 'lucide-react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { Logo } from '../layouts/AppLayout'
+import { Spinner } from '../components/ui'
 
 export default function Login() {
   const { user, ready, login } = useAuth()
@@ -14,7 +15,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const fillDemoCredentials = () => { setEmail('admin@gmail.com'); setPassword('Admin@123'); setError('') }
-  if (!ready) return <div className="min-h-screen bg-slate-100" />
+  if (!ready) return <div className="min-h-screen bg-slate-100" role="status"><Spinner label="Checking your session…" /></div>
   if (user) return <Navigate to="/" replace />
   async function submit(event) {
     event.preventDefault(); setError(''); setBusy(true)

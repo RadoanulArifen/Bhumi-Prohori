@@ -181,6 +181,13 @@ def model_metrics():
 
 
 # ------------------------------------------------------------------ dashboard / analytics
+def _analysis_totals():
+    signal_counts = ", ".join(f"COUNT(CASE WHEN {signal}>0 THEN 1 END) AS {signal}" for signal in SIGNALS)
+    return q(f"""SELECT COUNT(*) n, COUNT(CASE WHEN signal_count>0 THEN 1 END) f,
+                 COUNT(CASE WHEN signal_count=0 THEN 1 END) normal, {signal_counts}
+                 FROM analysis_results""").iloc[0]
+
+
 @router.get("/dashboard/stats")
 def dashboard_stats():
     pm = q("SELECT parcel_id, MAX(priority_score) ms FROM analysis_results GROUP BY parcel_id")
@@ -188,15 +195,15 @@ def dashboard_stats():
     hi = int(lv.isin(["High", "Critical"]).sum())
     med = int((lv == "Medium").sum())
     tl = q("SELECT priority_level l, COUNT(*) c FROM analysis_results GROUP BY priority_level")
-    normal = int(q("SELECT COUNT(*) c FROM analysis_results WHERE signal_count=0").c[0])
+    totals = _analysis_totals()
+    normal = int(totals.normal)
     low_all = int(tl[tl.l == "Low"].c.sum())
     risk = [{"name": "Critical", "value": int(tl[tl.l == "Critical"].c.sum())}, {"name": "High", "value": int(tl[tl.l == "High"].c.sum())},
             {"name": "Medium", "value": int(tl[tl.l == "Medium"].c.sum())}, {"name": "Low", "value": low_all - normal},
             {"name": "Normal", "value": normal}]
     monthly = q("""SELECT substr(t.transaction_date,1,7) m, SUM(a.priority_level IN ('High','Critical')) high, SUM(a.signal_count>0) flagged
                    FROM analysis_results a JOIN transactions t USING(transaction_id) GROUP BY m ORDER BY m DESC LIMIT 12""").iloc[::-1]
-    totals = q("SELECT COUNT(*) n, SUM(signal_count>0) f FROM analysis_results").iloc[0]
-    sig_counts = {SIGNAL_LABELS[s]: int(q(f"SELECT SUM({s}>0) c FROM analysis_results").c[0] or 0) for s in SIGNALS}
+    sig_counts = {SIGNAL_LABELS[s]: int(totals[s]) for s in SIGNALS}
     prim = q("SELECT primary_signal s, COUNT(*) c FROM analysis_results WHERE primary_signal IS NOT NULL GROUP BY primary_signal")
     trend = q("""SELECT substr(t.transaction_date,1,4) y, COUNT(*) total, SUM(a.signal_count>0) flagged,
                  SUM(a.priority_level IN ('High','Critical')) high
@@ -215,13 +222,14 @@ def dashboard_stats():
         "transaction_trends": records(trend),
         "monthly_suspicious": records(monthly),
         "recent_suspicious": records(recent),
-        "flagged_transactions": int(totals.f or 0),
+        "flagged_transactions": int(totals.f),
     }
 
 
 @router.get("/analytics")
 def analytics():
-    n = int(q("SELECT COUNT(*) c FROM analysis_results").c[0])
+    totals = _analysis_totals()
+    n = int(totals.n)
     lv = q("SELECT priority_level l, COUNT(*) c FROM analysis_results GROUP BY l")
     g = lambda l: int(lv[lv.l == l].c.sum())
     split = {"Normal": g("Low"), "Review": g("Medium"), "High Concern": g("High") + g("Critical")}
@@ -231,10 +239,10 @@ def analytics():
                        ORDER BY high DESC LIMIT 12""")
     by_type = q("""SELECT t.transaction_type name, COUNT(*) total, SUM(a.signal_count>0) flagged
                    FROM analysis_results a JOIN transactions t USING(transaction_id) GROUP BY t.transaction_type""")
-    by_signal = [{"name": SIGNAL_LABELS[s], "key": s, "value": int(q(f"SELECT SUM({s}>0) c FROM analysis_results").c[0] or 0)} for s in SIGNALS]
+    by_signal = [{"name": SIGNAL_LABELS[s], "key": s, "value": int(totals[s])} for s in SIGNALS]
     combos = q("SELECT signal_count k, COUNT(*) c FROM analysis_results GROUP BY signal_count ORDER BY k")
     metrics = json.loads((MODEL_DIR / "metrics.json").read_text()) if (MODEL_DIR / "metrics.json").exists() else None
-    return {"total_transactions": n, "split": [{"name": k, "value": v, "percent": round(100 * v / n, 1)} for k, v in split.items()],
+    return {"total_transactions": n, "split": [{"name": k, "value": v, "percent": round(100 * v / n, 1) if n else 0.0} for k, v in split.items()],
             "by_signal": by_signal, "by_district": records(by_district), "by_type": records(by_type),
             "signals_per_transaction": [{"name": str(int(r.k)), "value": int(r.c)} for r in combos.itertuples()],
             "model_metrics": metrics}
@@ -272,10 +280,12 @@ def parcels(district: Optional[str] = Query(None, max_length=60), upazila: Optio
             raise HTTPException(422, "Unknown parcel integrity category.")
         where.append(category_filters[integrity_status])
     w = ("WHERE " + " AND ".join(f"({x})" for x in where)) if where else ""
-    base = f"""FROM parcels p JOIN owners o2 ON o2.owner_id=p.current_owner_id
+    parcels_and_owners = "FROM parcels p JOIN owners o2 ON o2.owner_id=p.current_owner_id"
+    base = f"""{parcels_and_owners}
                LEFT JOIN (SELECT parcel_id, MAX(priority_score) ms, SUM(signal_count>0) alerts, COUNT(*) txns
                           FROM analysis_results GROUP BY parcel_id) m ON m.parcel_id=p.parcel_id {w}"""
-    total = int(q(f"SELECT COUNT(*) c {base}", **{k: v for k, v in p.items() if k not in ("limit", "offset")}).c[0])
+    count_base = base if integrity_status else f"{parcels_and_owners} {w}"
+    total = int(q(f"SELECT COUNT(*) c {count_base}", **{k: v for k, v in p.items() if k not in ("limit", "offset")}).c[0])
     df = q(f"""SELECT p.parcel_id, p.district, p.upazila, p.mouza, p.khatian_no, p.dag_no, p.total_area_decimal,
                o2.synthetic_name current_owner_name, m.ms max_priority, m.alerts, m.txns {base}
                ORDER BY (m.ms IS NULL), m.ms DESC, p.parcel_id LIMIT :limit OFFSET :offset""", **p)
@@ -394,7 +404,6 @@ def alerts(type: Optional[SignalName] = None, level: Optional[LevelName] = None,
         where.append("(a.transaction_id LIKE :qt OR a.parcel_id LIKE :qt)"); p["qt"] = f"%{q_text.strip().upper()}%"
     w = " AND ".join(where)
     base = f"FROM analysis_results a JOIN transactions t USING(transaction_id) JOIN parcels p ON p.parcel_id=a.parcel_id WHERE {w}"
-    total = int(q(f"SELECT COUNT(*) c {base}", **{k: v for k, v in p.items() if k not in ("limit", "offset")}).c[0])
     counts = q(f"SELECT a.priority_level l, COUNT(*) c {base} GROUP BY a.priority_level", **{k: v for k, v in p.items() if k not in ("limit", "offset")})
     df = q(f"""SELECT a.*, t.transaction_date, p.district, p.upazila, p.mouza {base}
                ORDER BY a.priority_score DESC, a.transaction_id LIMIT :limit OFFSET :offset""", **p)
@@ -405,7 +414,8 @@ def alerts(type: Optional[SignalName] = None, level: Optional[LevelName] = None,
         s.update({"date": a.transaction_date, "district": a.district, "upazila": a.upazila, "mouza": a.mouza,
                   "headline": ev[0]["message"] if ev else "", "evidence_count": len(ev)})
         items.append(s)
-    return {"total": total, "items": items, "level_counts": {r.l: int(r.c) for r in counts.itertuples()}}
+    level_counts = {r.l: int(r.c) for r in counts.itertuples()}
+    return {"total": sum(level_counts.values()), "items": items, "level_counts": level_counts}
 
 
 @router.get("/alerts/{transaction_id}")

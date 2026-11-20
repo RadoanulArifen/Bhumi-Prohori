@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Download, FileText } from 'lucide-react'
 import { api } from '../services/api'
-import { useApi } from '../hooks/useApi'
+import { useApi, useDebouncedSearch } from '../hooks/useApi'
 import { Card, Empty, ErrorBox, LevelBadge, PageHeader, Spinner, StatusBadge } from '../components/ui'
 import { dec } from '../utils/format'
 
@@ -39,8 +39,9 @@ function Preview({ tid }) {
 export default function Reports() {
   const [sp, setSp] = useSearchParams()
   const [text, setText] = useState('')
+  const search = useDebouncedSearch(text.trim())
   const tid = sp.get('tx')
-  const list = useApi(() => api.alerts({ limit: 12, q: text.trim() }), [text])
+  const list = useApi(() => api.alerts({ limit: 12, q: search }), [search])
   return (
     <div>
       <PageHeader title="Investigation Reports" subtitle="Pick a transaction to preview and download its investigation report (PDF)." />

@@ -1,17 +1,20 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { api } from '../services/api'
+import { api, getAuthToken } from '../services/api'
 
 const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
-  const [ready, setReady] = useState(false)
+  const [initialToken] = useState(getAuthToken)
+  const [ready, setReady] = useState(!initialToken)
   useEffect(() => {
+    if (!initialToken) return
     let active = true
     api.me().then((profile) => { if (active) setUser(profile) }).catch(() => {
+      if (!active) return
       try { localStorage.removeItem('lg_auth_token') } catch { /* storage may be disabled */ }
     }).finally(() => { if (active) setReady(true) })
     return () => { active = false }
-  }, [])
+  }, [initialToken])
   const login = async (email, password) => {
     const result = await api.login(email, password)
     localStorage.setItem('lg_auth_token', result.access_token)

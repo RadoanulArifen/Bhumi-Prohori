@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
 import { api } from '../services/api'
-import { useApi } from '../hooks/useApi'
+import { useApi, useDebouncedSearch } from '../hooks/useApi'
 import { Empty, ErrorBox, PageHeader, Pager, Spinner } from '../components/ui'
 import { SIGNAL_OPTIONS, dateFmt } from '../utils/format'
 import { useLanguage } from '../i18n'
@@ -34,12 +34,14 @@ export default function Alerts() {
   const [level, setLevel] = useState('')
   const [district, setDistrict] = useState('')
   const [text, setText] = useState(sp.get('parcel_id') || '')
-  const [offset, setOffset] = useState(0)
+  const search = useDebouncedSearch(text.trim())
+  const [page, setPage] = useState(null)
+  const offset = page?.search === search ? page.offset : 0
   const { language } = useLanguage()
   const bn = language === 'bn'
   const loc = useApi(() => api.locations(), [])
-  const { data, loading, error, reload } = useApi(() => api.alerts({ type, level, district, q: text.trim(), limit: 12, offset }), [type, level, district, text, offset])
-  useEffect(() => setOffset(0), [type, level, district, text])
+  const { data, loading, error, reload } = useApi(() => api.alerts({ type, level, district, q: search, limit: 12, offset }), [type, level, district, search, offset])
+  useEffect(() => setPage(null), [search])
   const counts = data?.level_counts || {}
   const all = Object.values(counts).reduce((a, b) => a + b, 0)
   const parcelOnly = /^P-\d{6}$/i.test(text.trim()) ? text.trim().toUpperCase() : null
@@ -49,11 +51,11 @@ export default function Alerts() {
       <PageHeader title={parcelOnly ? `${bn ? 'তথ্যগত অসংগতি' : 'Integrity Alerts'} (${parcelOnly})` : (bn ? 'তথ্যগত অসংগতি' : 'Integrity Alerts')} subtitle={bn ? 'তদন্তের অগ্রাধিকার অনুযায়ী সম্ভাব্য অসংগতিগুলো সাজানো হয়েছে। প্রতিটি সতর্কতায় মানুষের পর্যালোচনা প্রয়োজন।' : 'Potential inconsistencies ranked by Investigation Priority. Every alert requires human review.'} />
       <div className="mb-4 flex flex-wrap gap-2">
         {['', 'Critical', 'High', 'Medium', 'Low'].map((l) => (
-          <button key={l || 'all'} onClick={() => setLevel(l)} className={`rounded-lg border px-4 py-1.5 text-sm font-semibold ${level === l ? (l ? 'border-slate-800 bg-slate-800 text-white' : 'border-brand-600 bg-brand-600 text-white') : l === '' ? 'border-slate-200 bg-white text-slate-600' : `bg-white ${PILL[l]}`}`}>
+          <button key={l || 'all'} onClick={() => { setLevel(l); setPage(null) }} className={`rounded-lg border px-4 py-1.5 text-sm font-semibold ${level === l ? (l ? 'border-slate-800 bg-slate-800 text-white' : 'border-brand-600 bg-brand-600 text-white') : l === '' ? 'border-slate-200 bg-white text-slate-600' : `bg-white ${PILL[l]}`}`}>
             {(bn ? ({ '': 'সব', Critical: 'গুরুতর', High: 'উচ্চ', Medium: 'মাঝারি', Low: 'নিম্ন' }[l]) : (l || 'All'))} {data && `(${l ? counts[l] ?? 0 : level ? '…' : all})`}</button>))}
         <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap">
-          <FilterDropdown value={type} placeholder={bn ? 'সব ধরন' : 'All types'} options={ [['', bn ? 'সব ধরন' : 'All types'], ...SIGNAL_OPTIONS.map(([v, label]) => [v, bn ? ({ double_sale: 'একই জমি একাধিকবার হস্তান্তর', over_transfer: 'অতিরিক্ত হস্তান্তর', rapid_transfer: 'দ্রুত হস্তান্তর', ownership_chain_break: 'মালিকানার ধারাবাহিকতা ভঙ্গ', registration_mismatch: 'রেজিস্ট্রেশনের অমিল', mutation_mismatch: 'রেজিস্ট্রেশন ও নামজারির অমিল', temporal_inconsistency: 'তারিখের অসংগতি' }[v]) : label])] } onChange={setType} />
-          <FilterDropdown value={district} placeholder={bn ? 'সব জেলা' : 'All districts'} options={ [['', bn ? 'সব জেলা' : 'All districts'], ...(loc.data?.districts || []).map((d) => [d, bn ? banglaDisplay(d) : d])] } onChange={setDistrict} />
+          <FilterDropdown value={type} placeholder={bn ? 'সব ধরন' : 'All types'} options={ [['', bn ? 'সব ধরন' : 'All types'], ...SIGNAL_OPTIONS.map(([v, label]) => [v, bn ? ({ double_sale: 'একই জমি একাধিকবার হস্তান্তর', over_transfer: 'অতিরিক্ত হস্তান্তর', rapid_transfer: 'দ্রুত হস্তান্তর', ownership_chain_break: 'মালিকানার ধারাবাহিকতা ভঙ্গ', registration_mismatch: 'রেজিস্ট্রেশনের অমিল', mutation_mismatch: 'রেজিস্ট্রেশন ও নামজারির অমিল', temporal_inconsistency: 'তারিখের অসংগতি' }[v]) : label])] } onChange={(value) => { setType(value); setPage(null) }} />
+          <FilterDropdown value={district} placeholder={bn ? 'সব জেলা' : 'All districts'} options={ [['', bn ? 'সব জেলা' : 'All districts'], ...(loc.data?.districts || []).map((d) => [d, bn ? banglaDisplay(d) : d])] } onChange={(value) => { setDistrict(value); setPage(null) }} />
           <input className="input w-full sm:!w-48" value={text} onChange={(e) => setText(e.target.value)} placeholder={bn ? 'জমি / লেনদেনের আইডি' : 'Parcel / transaction ID'} />
         </div>
       </div>
@@ -77,7 +79,7 @@ export default function Alerts() {
                 </div>
               </div>))}
           </div>
-          <Pager total={data.total} limit={12} offset={offset} onChange={setOffset} />
+          <Pager total={data.total} limit={12} offset={offset} onChange={(next) => setPage({ search, offset: next })} />
         </>)}
     </div>
   )

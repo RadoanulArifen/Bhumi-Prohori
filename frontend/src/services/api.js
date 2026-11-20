@@ -1,7 +1,11 @@
 // Thin wrapper around fetch. All requests go to /api (proxied to FastAPI by Vite in development).
 const BASE = (import.meta.env.VITE_API_BASE || '').trim()
+export const getAuthToken = () => {
+  try { return localStorage.getItem('lg_auth_token') } catch { return null }
+}
 const authHeaders = () => {
-  try { const token = localStorage.getItem('lg_auth_token'); return token ? { Authorization: `Bearer ${token}` } : {} } catch { return {} }
+  const token = getAuthToken()
+  return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
 async function request(path, options = {}) {
