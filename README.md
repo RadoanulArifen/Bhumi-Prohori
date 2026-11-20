@@ -1,17 +1,17 @@
-![LandGuard application screenshot](moc.png)
+![Bhumi Prohori application screenshot](moc.png)
 
-# ভূমি প্রহরী | LandGuard
+# ভূমি প্রহরী | Bhumi Prohori
 
 **বাংলাদেশের জমির নথি যাচাই ও লেনদেনের অসংগতি শনাক্ত করার সিদ্ধান্ত-সহায়ক ব্যবস্থা**  
 **A decision-support system for checking land records and identifying transaction inconsistencies in Bangladesh**
 
 ভূমি প্রহরী জমি, মালিক, লেনদেন, রেজিস্ট্রেশন ও নামজারির নথি একসঙ্গে বিশ্লেষণ করে। নিয়মভিত্তিক যাচাই, মেশিন লার্নিং এবং ব্যাখ্যাযোগ্য প্রমাণের সাহায্যে কোন লেনদেন আগে মানুষের পর্যালোচনা করা দরকার, তা অগ্রাধিকার অনুযায়ী দেখায়। ওয়েবসাইট ও ডাউনলোডযোগ্য PDF প্রতিবেদন বাংলা ও ইংরেজি—দুই ভাষায় ব্যবহার করা যায়।
 
-LandGuard analyzes parcel, owner, transaction, registration, and mutation records together. Deterministic checks, machine learning, and explainable evidence help prioritize transactions for human review. The website and downloadable PDF reports are available in Bengali and English.
+Bhumi Prohori analyzes parcel, owner, transaction, registration, and mutation records together. Deterministic checks, machine learning, and explainable evidence help prioritize transactions for human review. The website and downloadable PDF reports are available in Bengali and English.
 
 > **আইনি সীমা:** ভূমি প্রহরী কেবল সিদ্ধান্ত গ্রহণে সহায়তা করে। এটি জালিয়াতি প্রমাণিত বলে ঘোষণা করে না, আইনি মালিকানা নির্ধারণ করে না এবং কোনো ব্যক্তির বিরুদ্ধে আইনি সিদ্ধান্ত দেয় না। ০–১০০ স্কোরটি **তদন্তের অগ্রাধিকার স্কোর**, জালিয়াতির সম্ভাবনা নয়। প্রতিটি সতর্কতায় মানুষের পর্যালোচনা প্রয়োজন।
 >
-> **Legal boundary:** LandGuard is decision-support software. It does not determine legal ownership, confirm fraud, or make legal findings about a person. Its 0–100 score is an **Investigation Priority Score**, not a fraud probability. Every alert requires human review.
+> **Legal boundary:** Bhumi Prohori is decision-support software. It does not determine legal ownership, confirm fraud, or make legal findings about a person. Its 0–100 score is an **Investigation Priority Score**, not a fraud probability. Every alert requires human review.
 
 ---
 
@@ -37,7 +37,7 @@ LandGuard analyzes parcel, owner, transaction, registration, and mutation record
 - একই অংশ একাধিকবার হস্তান্তর, অতিরিক্ত হস্তান্তর, দ্রুত হস্তান্তর, মালিকানার ধারাবাহিকতা ভঙ্গ এবং রেজিস্ট্রেশন/নামজারির অমিল শনাক্ত করা
 - প্রতিটি সতর্কতার কারণ, সংশ্লিষ্ট নথি ও তুলনার ফল দেখা
 - তদন্তের অগ্রাধিকার স্কোর এবং ব্যাখ্যাযোগ্য এআই বিশ্লেষণ দেখা
-- PDF, JPG, JPEG ও PNG দলিল থেকে তথ্য শনাক্ত করে ফর্মে আনা, প্রয়োজনে সংশোধন করা এবং বিদ্যমান LandGuard রেকর্ডের সঙ্গে তুলনা করা
+- PDF, JPG, JPEG ও PNG দলিল থেকে তথ্য শনাক্ত করে ফর্মে আনা, প্রয়োজনে সংশোধন করা এবং বিদ্যমান Bhumi Prohori রেকর্ডের সঙ্গে তুলনা করা
 - দলিল যাচাই, বিশ্লেষণ ড্যাশবোর্ড ও সাইডবার বাংলা/ইংরেজি ভাষা সেটিং অনুসারে ব্যবহার করা
 - বাংলা বা ইংরেজিতে ওয়েবসাইট ব্যবহার ও PDF প্রতিবেদন ডাউনলোড করা
 
@@ -174,7 +174,7 @@ min(৭০, নিয়মের ওজনের যোগফল) + ৩০ × �
 - `GET /api/investigations/{transaction_id}`, `POST /api/investigate/{transaction_id}`
 - `GET /api/registration-mutation/{transaction_id}`
 - `POST /api/document/extract` — PDF/image থেকে যাচাইযোগ্য তথ্য শনাক্ত করে (সর্বোচ্চ ১৫ MB)
-- `POST /api/document/verify` — পাঠানো দলিলের তথ্য বিদ্যমান LandGuard জমির রেকর্ডের সঙ্গে তুলনা করে
+- `POST /api/document/verify` — পাঠানো দলিলের তথ্য বিদ্যমান Bhumi Prohori জমির রেকর্ডের সঙ্গে তুলনা করে
 - `GET /api/reports/{transaction_id}?lang=bn` — বাংলা PDF; `lang=en` দিলে ইংরেজি PDF
 - `GET /api/owners/{owner_id}`, `GET /api/owners/{owner_id}/history`
 - `GET /api/ownership/history?parcel_id={parcel_id}` অথবা `?owner_id={owner_id}`
@@ -201,7 +201,7 @@ min(৭০, নিয়মের ওজনের যোগফল) + ৩০ × �
 
 ### How it works
 
-LandGuard links records to examine ownership and transaction continuity:
+Bhumi Prohori links records to examine ownership and transaction continuity:
 
 `Records → Ownership graph → Deterministic checks → Machine learning → Explainable evidence → Human review`
 
@@ -212,7 +212,7 @@ LandGuard links records to examine ownership and transaction continuity:
 - Detect overlapping transfers, over-transfers, rapid transfers, ownership-chain breaks, and registration/mutation mismatches
 - Review the evidence and linked records behind each alert
 - View Investigation Priority Scores and explainable AI analysis
-- Extract fields from PDF, JPG, JPEG, and PNG documents, review or edit them, and compare them with existing LandGuard records
+- Extract fields from PDF, JPG, JPEG, and PNG documents, review or edit them, and compare them with existing Bhumi Prohori records
 - Use document verification, the analytics dashboard, and navigation in Bengali or English
 - Use the website and download PDF reports in Bengali or English
 
@@ -331,7 +331,7 @@ All API routes use the `/api` prefix. Main endpoints:
 - `GET /api/investigations/{transaction_id}`, `POST /api/investigate/{transaction_id}`
 - `GET /api/registration-mutation/{transaction_id}`
 - `POST /api/document/extract` — extract reviewable fields from a PDF/image (15 MB maximum)
-- `POST /api/document/verify` — compare submitted document fields with existing LandGuard parcel records
+- `POST /api/document/verify` — compare submitted document fields with existing Bhumi Prohori parcel records
 - `GET /api/reports/{transaction_id}?lang=en` — English PDF; use `lang=bn` for Bengali
 - `GET /api/owners/{owner_id}`, `GET /api/owners/{owner_id}/history`
 - `GET /api/ownership/history?parcel_id={parcel_id}` or `?owner_id={owner_id}`
